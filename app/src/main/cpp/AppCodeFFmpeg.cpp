@@ -130,6 +130,11 @@ void AppCodeFFmpeg::start() {
     if(videoChannel){
         videoChannel->play();
     }
+
+    if(audioChannel){
+        audioChannel->play();
+    }
+
     pthread_create(&pid_play,0,task_start,this);
 
 }
@@ -144,7 +149,7 @@ void AppCodeFFmpeg::_start() {
         ret = av_read_frame(formatContext,packet);
         if(ret == 0){
             if(packet->stream_index == audioChannel->id){
-
+                audioChannel->packets.push(packet);
             }else if(packet->stream_index == videoChannel->id){
                 LOGD("将Packet放入队列中");
                 videoChannel->packets.push(packet);

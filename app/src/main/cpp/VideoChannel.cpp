@@ -55,10 +55,7 @@ void VideoChannel::decode() {
         ret = avcodec_send_packet(codecContext,packet);
         releaseAVPacket(packet);
 
-        if (ret == AVERROR(EAGAIN)) {
-            //需要更多数据
-            continue;
-        } else if (ret < 0) {
+        if (ret != 0) {
             //失败
             break;
         }
@@ -69,7 +66,7 @@ void VideoChannel::decode() {
        ret = avcodec_receive_frame(codecContext,avFrame);
        if(ret == AVERROR(EAGAIN)){
            continue;
-       }else if(ret < 0){
+       }else if(ret != 0){
            break;
        }
 
