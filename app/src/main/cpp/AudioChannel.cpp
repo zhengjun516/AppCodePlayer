@@ -9,7 +9,7 @@ extern "C"{
 #include <libswresample/swresample.h>
 }
 
-AudioChannel::AudioChannel(int id,AVCodecContext *codecContext) :BaseChannel(id,codecContext){
+AudioChannel::AudioChannel(int id,AVCodecContext *codecContext,AVRational timeBase) :BaseChannel(id,codecContext,timeBase){
 
     //根据布局获取声道数
     out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
@@ -42,8 +42,7 @@ void* task_audio_render(void *args){
 }
 
 void AudioChannel::play() {
-    packets.setWork(1);
-    frames.setWork(1);
+    startWork();
 
     swrContext = swr_alloc_set_opts(0,AV_CH_LAYOUT_STEREO,AV_SAMPLE_FMT_S16,out_sample_rate,
             codecContext->channel_layout,codecContext->sample_fmt,
@@ -96,6 +95,16 @@ void AudioChannel::decode() {
     releaseAVPacket(packet);
 }
 
+void AudioChannel::startWork() {
+    packets.setWork(1);
+    frames.setWork(1);
+}
+
+void AudioChannel::stopWork() {
+    packets.setWork(0);
+    frames.setWork(0);
+}
+
 //第一次主动调用在调用线程
 //之后在新线程中回调
 void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void *context) {
@@ -131,6 +140,10 @@ int AudioChannel::getPcm() {
     int samples = swr_convert(swrContext, &data, max_samples, (const uint8_t **)(frame->data), frame->nb_samples);
 
     data_size = samples * out_samplesize * out_channels;
+
+    //获取frame的一个相对播放时间
+    //获得相对播放这一段数据的秒数
+    clock = frame->pts * av_q2d(timeBase);
 
     return data_size;
 }

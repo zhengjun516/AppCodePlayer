@@ -99,7 +99,7 @@ Java_com_appcode_player_AppCodePlayer_getAVCodecInfo(JNIEnv *env, jobject thiz) 
 //画画
 void render(uint8_t *data, int lineSize,int w,int h){
     pthread_mutex_lock(&mutex);
-    LOGD("渲染");
+    //LOGD("渲染");
     if(!window){
         pthread_mutex_unlock(&mutex);
         return;
@@ -144,10 +144,6 @@ Java_com_appcode_player_AppCodePlayer_native_1prepare(JNIEnv *env, jobject thiz,
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_appcode_player_AppCodePlayer_native_1start(JNIEnv *env, jobject thiz) {
-    appCodeFFmpeg->start();
-}extern "C"
-JNIEXPORT void JNICALL
 Java_com_appcode_player_AppCodePlayer_native_1setSurface(JNIEnv *env, jobject thiz,
                                                          jobject surface) {
     pthread_mutex_lock(&mutex);
@@ -158,4 +154,29 @@ Java_com_appcode_player_AppCodePlayer_native_1setSurface(JNIEnv *env, jobject th
 
     window = ANativeWindow_fromSurface(env,surface);
     pthread_mutex_unlock(&mutex);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_appcode_player_AppCodePlayer_native_1start(JNIEnv *env, jobject thiz) {
+    appCodeFFmpeg->start();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_appcode_player_AppCodePlayer_native_1pause(JNIEnv *env, jobject thiz) {
+    // TODO: implement native_pause()
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_appcode_player_AppCodePlayer_native_1stop(JNIEnv *env, jobject thiz) {
+
+    if(appCodeFFmpeg){
+        appCodeFFmpeg->stop();
+    }
+
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_appcode_player_AppCodePlayer_native_1release(JNIEnv *env, jobject thiz) {
 }

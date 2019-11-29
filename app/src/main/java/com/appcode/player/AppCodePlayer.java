@@ -11,11 +11,23 @@ public class AppCodePlayer implements SurfaceHolder.Callback{
 		System.loadLibrary("AppCodePlayer");
 	}
 
+	private static AppCodePlayer instance;
+
 	private String dataSource;
 	private SurfaceView mSurfaceView;
 	private SurfaceHolder mSurfaceHolder;
 	private OnPreparedListener preparedListener;
 
+	public static AppCodePlayer getInstance(){
+		if(instance == null){
+			synchronized (AppCodePlayer.class){
+				if(instance == null){
+					instance = new AppCodePlayer();
+				}
+			}
+		}
+		return instance;
+	}
 
 	public void setSurfaceView(SurfaceView surfaceView){
 		if(this.mSurfaceHolder != null){
@@ -45,11 +57,12 @@ public class AppCodePlayer implements SurfaceHolder.Callback{
 	}
 
 	public void stop(){
-
+		native_stop();
 	}
 
 	public void release(){
 		mSurfaceHolder.removeCallback(this);
+		native_release();
 	}
 
 	@Override
@@ -77,9 +90,13 @@ public class AppCodePlayer implements SurfaceHolder.Callback{
 
 	}
 
+	public native void native_setSurface(Surface surface);
 	public native void native_prepare(String dataSource);
 	public native void native_start();
-	public native void native_setSurface(Surface surface);
+	public native void native_pause();
+	public native void native_stop();
+	public native void native_release();
+
 
 	public native String getUrlProtocolInfo();
 	public native String getAVFormatInfo();

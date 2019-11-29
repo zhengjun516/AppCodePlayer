@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.appcode.player">
-
     <!-- RECORD_AUDIO is needed to create an audio recorder -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <!-- MODIFY_AUDIO_SETTINGS is needed to use audio effects such as environmental reverb -->
-    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-    <!-- INTERNET is needed to use a URI-based audio player, depending on the URI -->
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
     <application
         android:name="com.appcode.AppCodeApplication"
         android:allowBackup="true"
@@ -19,13 +10,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity" android:screenOrientation="portrait">
+        <activity
+            android:name=".PlayerActivity"
+            android:label="@string/title_activity_player"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
+    </application> <!-- MODIFY_AUDIO_SETTINGS is needed to use audio effects such as environmental reverb -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" /> <!-- INTERNET is needed to use a URI-based audio player, depending on the URI -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
 </manifest>

@@ -24,6 +24,7 @@ public:
     void _prepare();
     void start();
     void _start();
+    void stop();
 
     void setRenderCallback(RenderFrameCallback renderFrameCallback);
 

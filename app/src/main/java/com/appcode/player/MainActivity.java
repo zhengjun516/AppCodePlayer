@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.SurfaceView;
 import android.view.View;
@@ -14,14 +15,6 @@ import com.appcode.utils.PermissionManager;
 
 public class MainActivity extends AppCompatActivity {
 
-	// Used to load the 'native-lib' library on application startup.
-	/*static {
-		System.loadLibrary("native-lib");
-	}*/
-
-	private SurfaceView mSurfaceView;
-
-	private AppCodePlayer appCodePlayer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -30,50 +23,29 @@ public class MainActivity extends AppCompatActivity {
 
 		initPermission();
 
-		mSurfaceView = findViewById(R.id.mSurfaceView);
-
-		appCodePlayer = new AppCodePlayer();
-		appCodePlayer.setSurfaceView(mSurfaceView);
-		appCodePlayer.setDataSource("/sdcard/Pictures/test/VID-20191108-WA0000.mp4");
-
-		appCodePlayer.setOnPreparedListener(new AppCodePlayer.OnPreparedListener() {
-			@Override
-			public void onPrepared() {
-				appCodePlayer.start();
-				runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						Toast.makeText(MainActivity.this,"可以开始播放了",Toast.LENGTH_LONG).show();;
-					}
-				});
-			}
-		});
-
-
-
 		findViewById(R.id.mProtocolInfo).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				((TextView)findViewById(R.id.mInfo)).setText(appCodePlayer.getUrlProtocolInfo());
+				((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getUrlProtocolInfo());
 			}
 		});
 		findViewById(R.id.mFormatInfo).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				((TextView)findViewById(R.id.mInfo)).setText(appCodePlayer.getAVFormatInfo());
+				((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getAVFormatInfo());
 			}
 		});
 		findViewById(R.id.mCodecInfo).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				((TextView)findViewById(R.id.mInfo)).setText(appCodePlayer.getAVCodecInfo());
+				((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getAVCodecInfo());
 			}
 		});
-
-		findViewById(R.id.mPrepare).setOnClickListener(new View.OnClickListener() {
+		findViewById(R.id.mStartPlay).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-
+				Intent intent = new Intent(MainActivity.this,PlayerActivity.class);
+				startActivity(intent);
 			}
 		});
 	}
@@ -81,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		appCodePlayer.prepare();
 	}
 
 	private void initPermission(){

@@ -43,7 +43,12 @@ void AppCodeFFmpeg::_prepare() {
     //1.打开媒体文件
     // 代表一个 视频/音频 包含了视频、音频的各种信息
     formatContext = avformat_alloc_context();
-    int ret = avformat_open_input(&formatContext,dataSource,0,0);
+
+    AVDictionary* options = 0;
+
+    av_dict_set(&options,"timeout","5000000",0);
+
+    int ret = avformat_open_input(&formatContext,dataSource,0,&options);
     //ret不为0表示打开失败
     if(ret != 0){
         LOGE("打开媒体失败 %s",av_err2str(ret));
@@ -100,10 +105,17 @@ void AppCodeFFmpeg::_prepare() {
             return;
         }
 
+       AVRational timeBase = stream->time_base;
+
         if (codecParameters->codec_type == AVMEDIA_TYPE_AUDIO){
-             audioChannel = new AudioChannel(i,codecContext);
+             stream->time_base;
+             audioChannel = new AudioChannel(i,codecContext,timeBase);
         }else if(codecParameters->codec_type == AVMEDIA_TYPE_VIDEO){
-             videoChannel = new VideoChannel(i,codecContext);
+             //帧率:单位时间内，需要显示多少张图像
+             AVRational avRational = stream->avg_frame_rate;
+             int fps = av_q2d(avRational);
+
+             videoChannel = new VideoChannel(i,codecContext,fps,timeBase);
              videoChannel->setRenderFrameCallback(renderFrameCallback);
         }
 
@@ -127,13 +139,16 @@ void* task_start(void* args){
 void AppCodeFFmpeg::start() {
     //标记正在播放
     isPlaying = 1;
-    if(videoChannel){
-        videoChannel->play();
-    }
 
     if(audioChannel){
         audioChannel->play();
     }
+
+    if(videoChannel){
+        videoChannel->setAudioChannel(audioChannel);
+        videoChannel->play();
+    }
+
 
     pthread_create(&pid_play,0,task_start,this);
 
@@ -151,7 +166,7 @@ void AppCodeFFmpeg::_start() {
             if(packet->stream_index == audioChannel->id){
                 audioChannel->packets.push(packet);
             }else if(packet->stream_index == videoChannel->id){
-                LOGD("将Packet放入队列中");
+                //LOGD("将Packet放入队列中");
                 videoChannel->packets.push(packet);
             }
 
@@ -171,6 +186,10 @@ void AppCodeFFmpeg::_start() {
         }
     }
     isPlaying = 0;
+}
+
+void AppCodeFFmpeg::stop() {
+
 }
 
 void AppCodeFFmpeg::setRenderCallback(RenderFrameCallback renderFrameCallback) {

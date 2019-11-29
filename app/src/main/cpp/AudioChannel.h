@@ -16,12 +16,14 @@ extern "C"{
 
 class AudioChannel : public BaseChannel{
 public:
-    AudioChannel(int id,AVCodecContext *codecContext);
+    AudioChannel(int id,AVCodecContext *codecContext,AVRational timeBase);
     ~AudioChannel();
     void play();
     void decode();
     void render();
     int getPcm();
+    void stopWork();
+    void startWork();
 
 private:
     pthread_t pid_audio_decode;
