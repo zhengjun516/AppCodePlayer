@@ -25,7 +25,9 @@ AudioChannel::~AudioChannel() {
         free(data);
         data = 0;
     }
-
+    packets.clear();
+    frames.clear();
+    LOGD("调用AudioChannel析构");
 }
 
 void* task_audio_decode(void *args){
@@ -36,7 +38,7 @@ void* task_audio_decode(void *args){
 
 void* task_audio_render(void *args){
     AudioChannel *audioChannel = static_cast<AudioChannel *>(args);
-    audioChannel->render();
+    audioChannel->initOpenSL();
     return 0;
 
 }
@@ -49,7 +51,7 @@ void AudioChannel::play() {
             codecContext->sample_rate,0,0);
     swr_init(swrContext);
 
-    isPlaying = 1;
+    isPlaying = true;
 
 
     //1.解码
@@ -57,6 +59,25 @@ void AudioChannel::play() {
     //2.播放
     pthread_create(&pid_audio_play,0,task_audio_render,this);
 
+
+}
+
+void AudioChannel::stop() {
+    isPlaying = false;
+
+    stopWork();
+
+
+    pthread_join(pid_audio_decode,0);
+    pthread_join(pid_audio_play,0);
+
+
+    releaseOpenSL();
+
+    if(swrContext){
+        swr_free(&swrContext);
+        swrContext = 0;
+    }
 
 }
 
@@ -144,13 +165,13 @@ int AudioChannel::getPcm() {
     //获取frame的一个相对播放时间
     //获得相对播放这一段数据的秒数
     clock = frame->pts * av_q2d(timeBase);
-
+    releaseAVFrame(frame);
     return data_size;
 }
 
 
 
-void AudioChannel::render() {
+void AudioChannel::initOpenSL() {
     //创建引擎
     SLresult result;
     // 创建引擎engineObject
@@ -233,3 +254,33 @@ void AudioChannel::render() {
 
     bqPlayerCallback(bqPlayerBufferQueue, this);
 }
+
+void AudioChannel::releaseOpenSL() {
+
+    if(bqPlayerPlay){
+        (*bqPlayerPlay)->SetPlayState(bqPlayerPlay,SL_PLAYSTATE_STOPPED);
+        bqPlayerPlay = 0;
+    }
+
+
+    if(bqPlayerObject){
+        (*bqPlayerObject)->Destroy(bqPlayerObject);
+        bqPlayerObject = 0;
+        bqPlayerBufferQueue = 0;
+    }
+
+
+    if(outputMixObject){
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = 0;
+
+    }
+
+    if(engineObject){
+        (*engineObject)->Destroy(engineObject);
+        engineObject  = 0;
+        engineInterface = 0;
+    }
+
+}
+

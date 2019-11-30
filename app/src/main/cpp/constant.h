@@ -10,7 +10,7 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR,"FFMPEG",__VA_ARGS__)
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG,"FFMPEG",__VA_ARGS__)
 
-#define DELETE(obj) if(obj){delete obj; obj = 0}
+#define DELETE(obj) if(obj){delete obj; obj = 0;}
 
 #define THREAD_MAIN  1
 #define THREAD_CHILD 2

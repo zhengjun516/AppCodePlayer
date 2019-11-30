@@ -26,19 +26,19 @@ public class MainActivity extends AppCompatActivity {
 		findViewById(R.id.mProtocolInfo).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getUrlProtocolInfo());
+				//((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getUrlProtocolInfo());
 			}
 		});
 		findViewById(R.id.mFormatInfo).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getAVFormatInfo());
+				//((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getAVFormatInfo());
 			}
 		});
 		findViewById(R.id.mCodecInfo).setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getAVCodecInfo());
+				//((TextView)findViewById(R.id.mInfo)).setText(AppCodePlayer.getInstance().getAVCodecInfo());
 			}
 		});
 		findViewById(R.id.mStartPlay).setOnClickListener(new View.OnClickListener() {

@@ -19,8 +19,10 @@ public:
     AudioChannel(int id,AVCodecContext *codecContext,AVRational timeBase);
     ~AudioChannel();
     void play();
+    void stop();
     void decode();
-    void render();
+    void initOpenSL();
+    void releaseOpenSL();
     int getPcm();
     void stopWork();
     void startWork();

@@ -23,6 +23,7 @@ public:
     virtual void play() = 0;
     virtual void startWork() = 0;
     virtual void stopWork() = 0;
+    virtual void stop() = 0;
 
     int id;
     SafeQueue<AVPacket*> packets;

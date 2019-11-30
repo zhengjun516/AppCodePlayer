@@ -53,16 +53,21 @@ public class AppCodePlayer implements SurfaceHolder.Callback{
 	}
 
 	public void pause(){
-
+		native_reset();
 	}
 
 	public void stop(){
 		native_stop();
 	}
 
+	public void reset(){
+
+	}
+
 	public void release(){
 		mSurfaceHolder.removeCallback(this);
 		native_release();
+		System.gc();
 	}
 
 	@Override
@@ -95,7 +100,14 @@ public class AppCodePlayer implements SurfaceHolder.Callback{
 	public native void native_start();
 	public native void native_pause();
 	public native void native_stop();
+	public native void native_reset();
 	public native void native_release();
+
+	public native void seekTo(long mesc);
+	public native long getCurrentPosition();
+	public native long getDuration();
+
+
 
 
 	public native String getUrlProtocolInfo();

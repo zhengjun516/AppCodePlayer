@@ -27,6 +27,7 @@ public:
     void setAudioChannel(AudioChannel *audioChannel);
     void stopWork();
     void startWork();
+    void stop();
 
 private:
     int fps;

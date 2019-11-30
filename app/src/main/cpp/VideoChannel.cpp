@@ -26,22 +26,23 @@ void dropAvFrame(queue<AVFrame *> &queue){
     if(!queue.empty()){
        AVFrame* frame = queue.front();
        BaseChannel::releaseAVFrame(frame);
-       queue.pop();
+        queue.pop();
     }
 
 }
 
 VideoChannel::VideoChannel(int id,AVCodecContext *codecContext,int fps,AVRational timeBase) :BaseChannel(id,codecContext,timeBase){
     this->fps = fps;
-
-    packets.setSyncHandle(dropAvPacket);
-
+    //packets.setSyncHandle(dropAvPacket);
+    frames.setSyncHandle(dropAvFrame);
 }
 
 
 
 VideoChannel::~VideoChannel() {
+    packets.clear();
     frames.clear();
+    LOGD("调用VideoChannel析构");
 }
 
 void* decode_task(void* args){
@@ -65,6 +66,14 @@ void VideoChannel::play() {
 
     //播放
     pthread_create(&pid_render,0,render_task,this);
+
+}
+
+void VideoChannel::stop() {
+    isPlaying = false;
+    stopWork();
+    pthread_join(pid_decode,0);
+    pthread_join(pid_render,0);
 
 }
 
@@ -99,8 +108,6 @@ void VideoChannel::decode() {
        }
 
        frames.push(avFrame);
-
-
     }
     releaseAVPacket(packet);
 }
@@ -125,45 +132,62 @@ void VideoChannel::render() {
         if(!isPlaying){
             break;
         }
-        sws_scale(swsContext,reinterpret_cast<const uint8_t *const *>(frame->data),
-                frame->linesize,0,
-                codecContext->height,
-                dst_data,
-                dst_lineSize
-                );
+
+        if(!ret){
+            continue;
+        }
 
         //获得当前画面播放的一个相对时间
-        double clock = frame->best_effort_timestamp*av_q2d(timeBase);
+         clock = frame->best_effort_timestamp * av_q2d(timeBase);
 
         int  extra_delay = frame->repeat_pict / (2*fps);
 
         int delays = frame_delays+extra_delay;
-        if(!audioChannel){
-            av_usleep(delays*microsecond);
-        }else{
+
             if(clock == 0){
+                //正常播放
                 av_usleep(delays* microsecond);
             }else{
-                double audioClock = audioChannel->clock;
+                double audioClock = audioChannel? audioChannel->clock:0;
                 //音视频时间相差时间间隔
-                double diff = clock-audioClock;
+                double diff = fabs(clock-audioClock);
                 //大于0表示视频比较快
                 //小于0表示音频比较快
-                if(diff > 0){
-                    LOGD("视频快了：%lf",diff);
-                    av_usleep((delays+diff) * microsecond);
-                }else{
-                    LOGD("音频快了：%lf",diff);
-                    if(fabs(diff) > 0.05 ){
-                        releaseAVFrame(frame);
-                        //丢包
-                        //packets.sync();
-                        frames.sync();
-                        continue;
+                if(audioChannel){
+                    if(clock > audioClock){
+                        LOGD("视频快了：%lf",diff);
+                        if(diff > 1){
+                            av_usleep((delays*2) * microsecond);
+                        }else{
+                            av_usleep((delays+diff) * microsecond);
+                        }
+
+                    }else{
+                        LOGD("音频快了：%lf",diff);
+                        if(diff > 1 ){
+
+                        }else if(diff >= 0.05){
+                            releaseAVFrame(frame);
+                            //丢包
+                            //packets.sync();
+                            frames.sync();
+                            continue;
+                        }else{
+
+                        };
                     }
+                }else{
+                    av_usleep(delays* microsecond);
                 }
+
             }
-        }
+
+        sws_scale(swsContext,reinterpret_cast<const uint8_t *const *>(frame->data),
+                  frame->linesize,0,
+                  codecContext->height,
+                  dst_data,
+                  dst_lineSize
+        );
 
         renderFrameCallback(dst_data[0],dst_lineSize[0],codecContext->width,codecContext->height);
         releaseAVFrame(frame);

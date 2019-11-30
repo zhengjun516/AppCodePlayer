@@ -17,6 +17,7 @@ JavaCallHelper::JavaCallHelper(JavaVM *vm, JNIEnv *env, jobject instance) {
 }
 JavaCallHelper::~JavaCallHelper() {
     env->DeleteGlobalRef(instance);
+    LOGD("调用JavaCallHelper析构");
 }
 
 void JavaCallHelper::onError(int thread, int errorCode) {

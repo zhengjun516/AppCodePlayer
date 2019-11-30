@@ -14,6 +14,11 @@ BaseChannel::BaseChannel(int id,AVCodecContext *codecContext,AVRational timeBase
 BaseChannel::~BaseChannel() {
     packets.clear();
     frames.clear();
+    if(codecContext){
+        avcodec_close(codecContext);
+        avcodec_free_context(&codecContext);
+        codecContext = 0;
+    }
 }
 
 //释放AVPacket

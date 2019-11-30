@@ -159,7 +159,9 @@ Java_com_appcode_player_AppCodePlayer_native_1setSurface(JNIEnv *env, jobject th
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_appcode_player_AppCodePlayer_native_1start(JNIEnv *env, jobject thiz) {
-    appCodeFFmpeg->start();
+    if(appCodeFFmpeg){
+        appCodeFFmpeg->start();
+    }
 }
 
 extern "C"
@@ -171,12 +173,41 @@ Java_com_appcode_player_AppCodePlayer_native_1pause(JNIEnv *env, jobject thiz) {
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_appcode_player_AppCodePlayer_native_1stop(JNIEnv *env, jobject thiz) {
-
     if(appCodeFFmpeg){
         appCodeFFmpeg->stop();
+        DELETE(appCodeFFmpeg)
     }
+}
 
-}extern "C"
+extern "C"
 JNIEXPORT void JNICALL
 Java_com_appcode_player_AppCodePlayer_native_1release(JNIEnv *env, jobject thiz) {
+    pthread_mutex_lock(&mutex);
+    if (window) {
+        ANativeWindow_release(window);
+        window = 0;
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_appcode_player_AppCodePlayer_native_1reset(JNIEnv *env, jobject thiz) {
+    // TODO: implement native_reset()
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_appcode_player_AppCodePlayer_getDuration(JNIEnv *env, jobject thiz) {
+    // TODO: implement getDuration()
+}
+
+extern "C"
+JNIEXPORT jlong JNICALL
+Java_com_appcode_player_AppCodePlayer_getCurrentPosition(JNIEnv *env, jobject thiz) {
+    // TODO: implement getCurrentPosition()
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_appcode_player_AppCodePlayer_seekTo(JNIEnv *env, jobject thiz, jlong mesc) {
+    // TODO: implement seekTo()
 }

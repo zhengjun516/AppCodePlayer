@@ -17,10 +17,9 @@ AppCodeFFmpeg::AppCodeFFmpeg(JavaCallHelper *javaCallHellper,const char *dataSou
 }
 
 AppCodeFFmpeg::~AppCodeFFmpeg() {
-
     delete dataSource;
     dataSource = 0;
-
+    LOGD("调用AppCodeFFmpeg析构");
 }
 
 void* task_prepare(void *args){
@@ -30,7 +29,7 @@ void* task_prepare(void *args){
 }
 
 void AppCodeFFmpeg::prepare() {
-  pthread_create(&pid,0,task_prepare,this);
+  pthread_create(&pid_prepare,0,task_prepare,this);
 }
 
 void AppCodeFFmpeg::_prepare() {
@@ -148,17 +147,29 @@ void AppCodeFFmpeg::start() {
         videoChannel->setAudioChannel(audioChannel);
         videoChannel->play();
     }
-
-
     pthread_create(&pid_play,0,task_start,this);
 
 }
 
 //只负责读取数据包
 void AppCodeFFmpeg::_start() {
+    LOGD("start read packet");
     //1.读取媒体数据包(音视频数据包)
     int ret;
     while(isPlaying){
+        if(audioChannel && audioChannel->packets.size() > 100){
+            //等待10毫秒再次检查
+            av_usleep(10 * 1000);
+            continue;
+        }
+
+        if(videoChannel && videoChannel->packets.size() > 100){
+            //等待10毫秒再次检查
+            av_usleep(10 * 1000);
+            continue;
+        }
+
+
         //生成的内存在堆当中
         AVPacket *packet = av_packet_alloc();
         ret = av_read_frame(formatContext,packet);
@@ -172,24 +183,56 @@ void AppCodeFFmpeg::_start() {
 
         }else if(ret == AVERROR_EOF){
             //读取完成，但可能还没播放完成
-
-            while (isPlaying) {
-                if (videoChannel->packets.empty()) {
-                    break;
+                if (audioChannel->packets.empty() && audioChannel->frames.empty() &&
+                videoChannel->packets.empty() && videoChannel->frames.empty()) {
+                    continue;
                 }
-                //等待10毫秒再次检查
-                av_usleep(10 * 1000);
-            }
-            break;
         }else{
             break;
         }
     }
+    LOGD("read packet finished or stop");
     isPlaying = 0;
+    audioChannel->stop();
+    videoChannel->stop();
 }
 
 void AppCodeFFmpeg::stop() {
+    isPlaying = 0;
 
+    pthread_join(pid_prepare, 0);
+    // 保证 start线程结束
+    pthread_join(pid_play, 0);
+
+    DELETE(javaCallHellper);
+    DELETE(audioChannel);
+    DELETE(videoChannel);
+
+    if(formatContext){
+        avformat_close_input(&formatContext);
+        avformat_free_context(formatContext);
+        formatContext = 0;
+    }
+
+}
+
+void *aync_stop(void *args) {
+    AppCodeFFmpeg *appCodeFFmpeg = static_cast<AppCodeFFmpeg *>(args);
+    //   等待prepare结束
+    pthread_join(appCodeFFmpeg->pid_prepare, 0);
+    // 保证 start线程结束
+    pthread_join(appCodeFFmpeg->pid_play, 0);
+    DELETE(appCodeFFmpeg->videoChannel);
+    DELETE(appCodeFFmpeg->audioChannel);
+    // 这时候释放就不会出现问题了
+    if (appCodeFFmpeg->formatContext) {
+        //先关闭读取 (关闭fileintputstream)
+        avformat_close_input(&appCodeFFmpeg->formatContext);
+        avformat_free_context(appCodeFFmpeg->formatContext);
+        appCodeFFmpeg->formatContext = 0;
+    }
+    DELETE(appCodeFFmpeg);
+    return 0;
 }
 
 void AppCodeFFmpeg::setRenderCallback(RenderFrameCallback renderFrameCallback) {
